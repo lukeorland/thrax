@@ -8,13 +8,8 @@ calculated by projecting onto the span from a target-side parse tree).
 
 COMPILING:
 
-First, you need to set two environment variables:
-$HADOOP should point to the directory where Hadoop is installed.
-$AWS_SDK should point to the directory where the Amazon Web Services SDK
-is installed.
-
-To compile, type
-
+    ant download-ivy
+    ant resolve -lib ivy
     ant
 
 This will compile all classes and package them into a jar for use on a 
@@ -36,3 +31,5 @@ COPYRIGHT AND LICENSE:
 Copyright (c) 2010-11 by Jonny Weese <jonny@cs.jhu.edu>
 
 See LICENSE.txt (included with this distribution) for the complete terms.
+
+

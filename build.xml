@@ -1,16 +1,47 @@
-<project name="Thrax" basedir="." default="jar">
+<project name="Thrax" basedir="." default="jar" xmlns:ivy="antlib:org.apache.ivy.ant">
 
     <property environment="env"/>
 
     <property name="src" value="./src"/>
     <property name="build" value="./bin"/>
     <property name="lib" value="./lib"/>
+    <property name="lib.dir" value="lib" />
+    <property name="build.dir" value="bin" />
     <property name="doc" value="./doc"/>
     <property name="test" value="./test"/>
-    <property name="hadoop-src" value="edu/jhu/thrax/hadoop"/>
 
-    <property name="testng" value="${lib}/testng-5.8-jdk15.jar"/>
-    <property name="jarfiles" value="${env.HADOOP}/hadoop-core-${env.HADOOP_VERSION}.jar:${env.AWS_SDK}/lib/aws-java-sdk-${env.AWS_VERSION}.jar"/> 
+    <path id="project.classpath">
+        <pathelement location="${build.dir}" />
+        <fileset dir="${lib.dir}">
+            <include name="**/*.jar" />
+        </fileset>
+    </path>
+
+    <property name="ivy.install.version" value="2.0.0" />
+    <property name="ivy.jar.dir" value="${basedir}/ivy" />
+    <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
+
+    <target name="download-ivy" unless="skip.download">
+        <mkdir dir="${ivy.jar.dir}" />
+        <!-- download Ivy from web site so that it can be used even without any special installation -->
+        <echo message="installing ivy..." />
+        <get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" dest="${ivy.jar.file}" usetimestamp="true" />
+    </target>
+
+    <target name="install-ivy" depends="download-ivy" description="--&gt; install ivy">
+        <!-- try to load ivy here from local ivy dir, in case the user has not already dropped
+              it into ant's lib dir (note that the latter copy will always take precedence).
+              We will not fail as long as local lib dir exists (it may be empty) and
+              ivy is in at least one of ant's lib dir or the local lib dir. -->
+        <path id="ivy.lib.path">
+            <fileset dir="${ivy.jar.dir}" includes="*.jar" />
+        </path>
+        <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path" />
+    </target>
+
+    <target name="resolve" description="--> retrieve dependencies with ivy">
+        <ivy:retrieve />
+    </target>
 
     <target name="init">
         <tstamp/>
@@ -18,20 +49,24 @@
     </target>
 
     <target name="init-hadoop">
-        <fail message="Please set the $HADOOP environment variable to point to your Hadoop installation." unless="env.HADOOP"/>
-        <fail message="Please set the $HADOOP_VERSION environment variable to identify to your Hadoop version." unless="env.HADOOP_VERSION"/>
+        <!-->
+          <fail message="Please set the $HADOOP environment variable to point to your Hadoop installation." unless="env.HADOOP"/>
+          <fail message="Please set the $HADOOP_VERSION environment variable to identify to your Hadoop version." unless="env.HADOOP_VERSION"/>
+        </!-->
     </target>
 
     <target name="init-amazon">
-        <fail message="Please set the $AWS_SDK environment variable to point to your Amazon Web Services SDK installation." unless="env.AWS_SDK"/>
-        <fail message="Please set the $AWS_VERSION environment variable to identify to your Amazon Web Services SDK version." unless="env.AWS_VERSION"/>
+        <!-->
+          <fail message="Please set the $AWS_SDK environment variable to point to your Amazon Web Services SDK installation." unless="env.AWS_SDK"/>
+          <fail message="Please set the $AWS_VERSION environment variable to identify to your Amazon Web Services SDK version." unless="env.AWS_VERSION"/>
+        </!-->
     </target>
 
     <target name="compile" depends="init,init-hadoop,init-amazon">
         <javac srcdir="${src}" destdir="${build}"
-            classpath="${jarfiles}"
             debug="on" includeantruntime="false">
             <compilerarg value="-Xlint"/>
+            <classpath refid="project.classpath" />
         </javac>
     </target>
 
@@ -41,7 +76,7 @@
                 <include name="**/*.class"/>
             </fileset>
             <fileset dir=".">
-		<include name="AwsCredentials.properties"/>
+            <include name="AwsCredentials.properties"/>
             </fileset>
             <manifest>
                 <attribute name="Main-Class" value="edu.jhu.thrax.Thrax"/>
